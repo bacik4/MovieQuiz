@@ -3,7 +3,7 @@
 //  MovieQuiz
 //
 //
-import UIKit
+import Foundation
 
 struct QuizQuestion {
     let image: Data
