@@ -1,6 +1,6 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController{
+final class MovieQuizViewController: UIViewController, MovieQuizViewControllerProtocol{
     // MARK: - Lifecycle
     @IBOutlet private weak var imageView: UIImageView!
     @IBOutlet private weak var textLabel: UILabel!
@@ -10,11 +10,7 @@ final class MovieQuizViewController: UIViewController{
     @IBOutlet private weak var noButton: UIButton!
     
     private var alertPresenter = AlertPresenter()
-    //private let presenter = MovieQuizPresenter()
     private var presenter: MovieQuizPresenter!
-    
-    private var statisticService: StatisticServiceProtocol = StatisticService()
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -50,28 +46,30 @@ final class MovieQuizViewController: UIViewController{
         setButtonsEnabled(true)
     }
     
-    func showAnswerResult(isCorrect: Bool) {
-        presenter.didAnswer(isCorrectAnswer: isCorrect)
-        
+    func highlightImageBorder(isCorrectAnswer: Bool) {
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
-        imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self else { return }
-            self.presenter.showNextQuestionOrResults()
-        }
+        imageView.layer.borderColor = isCorrectAnswer ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
     }
-
+    
     func show(quiz result: QuizResultsViewModel) {
-        let alertModel = AlertModel(
+        let message = presenter.makeResultsMessage()
+        
+        let alert = UIAlertController(
             title: result.title,
-            message: result.text,
-            buttonText: result.buttonText) { [weak self] in
-            guard let self else { return }
-            self.presenter.restartGame()
+            message: message,
+            preferredStyle: .alert)
+            
+        let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
+                guard let self = self else { return }
+                
+                self.presenter.restartGame()
         }
-        alertPresenter.presentAlert(in: self, model: alertModel)
+        alert.view.accessibilityIdentifier = "Game results"
+
+        alert.addAction(action)
+        
+        self.present(alert, animated: true, completion: nil)
     }
     
     func showLoadingIndicator() {
