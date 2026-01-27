@@ -12,7 +12,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var correctAnswers = 0
     
     private var questionFactory: QuestionFactoryProtocol?
-    private var currentQuestion: QuizQuestion?
     private var alertPresenter = AlertPresenter()
     private let presenter = MovieQuizPresenter()
     
@@ -21,6 +20,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        presenter.viewController = self
         setupUI()
         setupDependencies()
         startGame()
@@ -41,32 +41,24 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
 
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        handleAnswer(true)
+        presenter.yesButtonClicked()
     }
 
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        handleAnswer(false)
+        presenter.noButtonClicked()
     }
 
-    private func handleAnswer(_ givenAnswer: Bool) {
-        guard let currentQuestion else { return }
-
-        setButtonsEnabled(false)
-        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-    }
-
-    private func setButtonsEnabled(_ isEnabled: Bool) {
+    func setButtonsEnabled(_ isEnabled: Bool) {
         yesButton.isEnabled = isEnabled
         noButton.isEnabled = isEnabled
     }
-
     
     // MARK: - QuestionFactoryDelegate
 
     func didReceiveNextQuestion(question: QuizQuestion?) {
         guard let question else { return }
         
-        currentQuestion = question
+        presenter.currentQuestion = question
         let viewModel = presenter.convert(model: question)
         
         DispatchQueue.main.async { [weak self] in
@@ -83,7 +75,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         setButtonsEnabled(true)
     }
     
-    private func showAnswerResult(isCorrect: Bool) {
+    func showAnswerResult(isCorrect: Bool) {
         if isCorrect {
             correctAnswers += 1
         }
