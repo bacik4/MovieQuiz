@@ -10,6 +10,9 @@ final class MovieQuizPresenter {
     var currentQuestion: QuizQuestion?
     weak var viewController: MovieQuizViewController?
     private var currentQuestionIndex: Int = 0
+    private var correctAnswers = 0
+    private var questionFactory: QuestionFactoryProtocol?
+    private var statisticService: StatisticServiceProtocol = StatisticService()
     
     func convert(model: QuizQuestion) -> QuizStepViewModel {
         QuizStepViewModel(
@@ -36,6 +39,36 @@ final class MovieQuizPresenter {
     }
     func noButtonClicked() {
         handleAnswer(false)
+    }
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question else { return }
+        
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.viewController?.show(quiz: viewModel)
+        }
+    }
+    func showNextQuestionOrResults() {
+        if self.isLastQuestion() {
+            statisticService.store(correct: correctAnswers, total: questionsAmount)
+            let text = """
+            Ваш результат: \(correctAnswers)/10
+            Количество сыгранных квизов: \(statisticService.gamesCount) 
+            Рекорд: \(statisticService.bestGame.correct)/10 (\(statisticService.bestGame.date.dateTimeString))
+            Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%
+            """
+          let viewModel = QuizResultsViewModel(
+            title: "Этот раунд окончен!",
+            text: text,
+            buttonText: "Сыграть ещё раз")
+          //imageView.layer.borderWidth = 0
+      } else {
+          self.switchToNextQuestion()
+          questionFactory?.requestNextQuestion()
+      }
     }
     
     private func handleAnswer(_ givenAnswer: Bool) {
