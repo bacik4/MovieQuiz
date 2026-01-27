@@ -5,7 +5,7 @@
 //
 import UIKit
 
-final class MovieQuizPresenter {
+final class MovieQuizPresenter: QuestionFactoryDelegate {
     let questionsAmount: Int = 10
     var currentQuestion: QuizQuestion?
     var correctAnswers = 0
@@ -14,25 +14,54 @@ final class MovieQuizPresenter {
     private var currentQuestionIndex: Int = 0
     private var statisticService: StatisticServiceProtocol = StatisticService()
     
+    init(viewController: MovieQuizViewController) {
+        self.viewController = viewController
+        
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        questionFactory?.loadData()
+        viewController.showLoadingIndicator()
+    }
+    
     func convert(model: QuizQuestion) -> QuizStepViewModel {
         QuizStepViewModel(
-            //image: UIImage(data: model.image) ?? UIImage(),
-            image: model.image, // <- здесь убрали преобразование в UIImage и храним «сырые» данные
+            image: model.image,
             question: model.text,
-            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)" // ОШИБКА: `currentQuestionIndex` и `questionsAmount` неопределены
-        )
+            questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
+    }
+    func setupDependencies() {
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        statisticService = StatisticService()
+    }
+    
+    func didLoadDataFromServer() {
+        viewController?.hideLoadingIndicator()
+        questionFactory?.requestNextQuestion()
+    }
+    func didFailToLoadData(with error: Error) {
+        let message = error.localizedDescription
+        viewController?.showNetworkError(message: message)
     }
     
     func isLastQuestion() -> Bool {
-            currentQuestionIndex == questionsAmount - 1
+        currentQuestionIndex == questionsAmount - 1
+    }
+    func didAnswer(isCorrectAnswer: Bool){
+        if (isCorrectAnswer) { correctAnswers += 1 }
+    }
+    
+    func startGame() {
+        viewController?.showLoadingIndicator()
+        questionFactory?.loadData()
     }
         
-    func resetQuestionIndex() {
-            currentQuestionIndex = 0
+    func restartGame() {
+        currentQuestionIndex = 0
+        correctAnswers = 0
+        questionFactory?.requestNextQuestion()
     }
         
     func switchToNextQuestion() {
-            currentQuestionIndex += 1
+        currentQuestionIndex += 1
     }
     func yesButtonClicked() {
         handleAnswer(true)
