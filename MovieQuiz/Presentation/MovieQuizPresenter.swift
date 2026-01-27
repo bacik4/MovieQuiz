@@ -8,10 +8,10 @@ import UIKit
 final class MovieQuizPresenter {
     let questionsAmount: Int = 10
     var currentQuestion: QuizQuestion?
+    var correctAnswers = 0
+    var questionFactory: QuestionFactoryProtocol?
     weak var viewController: MovieQuizViewController?
     private var currentQuestionIndex: Int = 0
-    private var correctAnswers = 0
-    private var questionFactory: QuestionFactoryProtocol?
     private var statisticService: StatisticServiceProtocol = StatisticService()
     
     func convert(model: QuizQuestion) -> QuizStepViewModel {
@@ -64,7 +64,7 @@ final class MovieQuizPresenter {
             title: "Этот раунд окончен!",
             text: text,
             buttonText: "Сыграть ещё раз")
-          //imageView.layer.borderWidth = 0
+            viewController?.show(quiz: viewModel)
       } else {
           self.switchToNextQuestion()
           questionFactory?.requestNextQuestion()

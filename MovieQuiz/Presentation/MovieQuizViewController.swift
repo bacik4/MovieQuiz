@@ -79,33 +79,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self else { return }
-            self.showNextQuestionOrResults()
+            self.presenter.correctAnswers = self.correctAnswers
+            self.presenter.questionFactory = self.questionFactory
+            self.presenter.showNextQuestionOrResults()
         }
     }
 
-    private func showNextQuestionOrResults() {
-        if presenter.isLastQuestion() {
-            statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
-            let text = """
-            Ваш результат: \(correctAnswers)/10
-            Количество сыгранных квизов: \(statisticService.gamesCount) 
-            Рекорд: \(statisticService.bestGame.correct)/10 (\(statisticService.bestGame.date.dateTimeString))
-            Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%
-            """
-          let viewModel = QuizResultsViewModel(
-            title: "Этот раунд окончен!",
-            text: text,
-            buttonText: "Сыграть ещё раз")
-          show(quiz: viewModel)
-          imageView.layer.borderWidth = 0
-      } else {
-          presenter.switchToNextQuestion()
-        
-          self.questionFactory?.requestNextQuestion()
-      }
-    }
-
-    private func show(quiz result: QuizResultsViewModel) {
+    func show(quiz result: QuizResultsViewModel) {
         let alertModel = AlertModel(
             title: result.title,
             message: result.text,
