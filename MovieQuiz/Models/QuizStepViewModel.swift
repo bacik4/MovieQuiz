@@ -3,10 +3,10 @@
 //  MovieQuiz
 //
 //
-import UIKit
+import Foundation
 
 struct QuizStepViewModel {
-    let image: UIImage
+    let image: Data
     let question: String
     let questionNumber: String
 }
