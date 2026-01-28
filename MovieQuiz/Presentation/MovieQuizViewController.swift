@@ -89,6 +89,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
             }
         alertPresenter.presentAlert(in: self, model: model)
     }
+    
     func hideLoadingIndicator(){
         activityIndicator.isHidden = true
     }
